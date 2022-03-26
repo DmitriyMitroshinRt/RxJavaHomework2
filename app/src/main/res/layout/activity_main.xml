@@ -7,7 +7,7 @@
     android:orientation="vertical"
     tools:context=".MainActivity"
     tools:ignore="HardcodedText,LabelFor">
-
+    <!--real time clock-->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -15,6 +15,7 @@
 
         <TextView
             style="@style/TitleText"
+            android:textSize="20sp"
             android:text="Часы:" />
 
         <TextView
@@ -28,7 +29,7 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#ccc" />
-
+    <!--countdown timer-->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -36,6 +37,7 @@
 
         <TextView
             style="@style/TitleText"
+            android:textSize="20sp"
             android:text="Обратный отсчёт:" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -62,6 +64,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginBottom="4dp"
             android:layout_gravity="bottom"
+            android:elevation="5dp"
             android:id="@+id/countdownStartButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -80,6 +83,7 @@
 
         <TextView
             style="@style/TitleText"
+            android:textSize="20sp"
             android:text="Секундомер:" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -123,6 +127,7 @@
                 android:id="@+id/stopwatchStartButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:elevation="4dp"
                 android:text="Start" />
 
             <View
@@ -134,6 +139,7 @@
                 android:id="@+id/stopwatchEndButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:elevation="4dp"
                 android:text="Pause" />
         </LinearLayout>
     </FrameLayout>
