@@ -1,10 +1,15 @@
 package iam.thevoid.epic.timeapp
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Observable
+import java.text.DateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 // Дан экран с готовой разметкой
 // Реализовать при помощи RxJava
@@ -39,14 +44,22 @@ class MainActivity : AppCompatActivity() {
     // Секундомер
     private lateinit var stopwatchText: TextView
     private lateinit var stopwatchMillisText: TextView
-    private lateinit var stopwatchStartButton: EditText
-    private lateinit var stopwatchEndButton: EditText
+    private lateinit var stopwatchStartButton: Button
+    private lateinit var stopwatchEndButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         clockText = findViewById(R.id.clockText)
+
+        //val subject = PublishSubject.create<Long>()
+        Observable
+            .interval(1000, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                clockText.text = DateFormat.getTimeInstance(DateFormat.MEDIUM).format(Calendar.getInstance().time)
+            }
 
         countdownText = findViewById(R.id.countdownText)
         countdownSecondsEditText = findViewById(R.id.countdownEditText)
