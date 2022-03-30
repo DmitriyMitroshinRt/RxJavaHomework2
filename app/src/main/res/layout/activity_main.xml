@@ -65,7 +65,7 @@
             android:id="@+id/countdownStartButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Start" />
+            android:text="Старт" />
     </FrameLayout>
 
     <View
@@ -123,7 +123,7 @@
                 android:id="@+id/stopwatchStartButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Start" />
+                android:text="Старт" />
 
             <View
                 android:layout_width="0dp"
@@ -134,7 +134,7 @@
                 android:id="@+id/stopwatchEndButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pause" />
+                android:text="Пауза" />
         </LinearLayout>
     </FrameLayout>
 
