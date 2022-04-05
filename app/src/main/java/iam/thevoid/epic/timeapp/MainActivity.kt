@@ -55,7 +55,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var stopwatchTime: LocalTime
     private lateinit var stopwatchTimeBuf: LocalTime
 
-    private var disposable: Disposable? = null
+    private var disposableCountdown: Disposable? = null
+    private var disposableStopwatch: Disposable? = null
     private var pause: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,11 +86,16 @@ class MainActivity : AppCompatActivity() {
         countdownStartButton = findViewById(R.id.countdownStartButton)
 
         countdownStartButton.setOnClickListener {
+            if (disposableCountdown != null) {
+                disposableCountdown?.dispose()
+                disposableCountdown = null
+                countdownText.setText("")
+            }
             if (!countdownSecondsEditText.text.isEmpty()) {
                 counter = countdownSecondsEditText.text.toString().toLong()
                 countdownText.setText(getElapsedCountDownTime(counter))
 
-                Flowable.fromIterable(1L..counter)
+                disposableCountdown = Flowable.fromIterable(1L..counter)
                     .concatMapCompletable {
                         Completable
                             .timer(1, TimeUnit.SECONDS)
@@ -119,19 +125,29 @@ class MainActivity : AppCompatActivity() {
 
         stopwatchStartButton.setOnClickListener {
             Log.d(LOG_TAG, "start timer")
+            if (disposableStopwatch != null) {
+                disposableStopwatch?.dispose()
+                disposableStopwatch = null
+            }
+
+            stopwatchStartButton.setText("START")
+            stopwatchEndButton.setText("PAUSE")
+
             if (!pause)
                 clearStopwatchTime()
+
             stopwatchTimeBuf = LocalTime.now()
             pause = false
 
-            disposable = Flowable.interval(0, 1, TimeUnit.MILLISECONDS)
+            disposableStopwatch = Flowable.interval(0, 1, TimeUnit.MILLISECONDS)
                 .subscribeOn(Schedulers.computation())
                 .onBackpressureDrop()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     {
                         val now = LocalTime.now()
-                        stopwatchTime = stopwatchTime.plus(stopwatchTimeBuf.until(now, MILLIS), MILLIS)
+                        stopwatchTime =
+                            stopwatchTime.plus(stopwatchTimeBuf.until(now, MILLIS), MILLIS)
                         stopwatchTimeBuf = now
                         Log.d(
                             LOG_TAG,
@@ -150,8 +166,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         stopwatchEndButton.setOnClickListener {
-            disposable?.dispose()
-            disposable = null
+            disposableStopwatch?.dispose()
+            disposableStopwatch = null
             if (pause) {
                 Log.d(LOG_TAG, "clear timer")
                 stopwatchStartButton.setText("START")
