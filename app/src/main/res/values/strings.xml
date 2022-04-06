@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Timer</string>
+    <string name="button_Start">Start</string>
+    <string name="button_Reset">Reset</string>
+    <string name="button_Pause">Pause</string>
+    <string name="button_Resume">Resume</string>
+    <string name="hint_Seconds">Seconds</string>
+    <string name="label_Time">Часы:</string>
+    <string name="label_Countdown">Обратный отсчёт:</string>
+    <string name="label_Stopwatch">Секундомер:</string>
 </resources>

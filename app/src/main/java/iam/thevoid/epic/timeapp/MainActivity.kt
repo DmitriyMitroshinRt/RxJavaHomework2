@@ -1,5 +1,6 @@
 package iam.thevoid.epic.timeapp
 
+import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -7,6 +8,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 import java.text.DateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -47,27 +50,111 @@ class MainActivity : AppCompatActivity() {
     private lateinit var stopwatchStartButton: Button
     private lateinit var stopwatchEndButton: Button
 
+    // Счётчики
+    private var subscriptionClock : Disposable? = null
+    private var subscriptionCountdown : Disposable? = null
+    private var subscriptionStopwatch : Disposable? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         clockText = findViewById(R.id.clockText)
 
-        //val subject = PublishSubject.create<Long>()
-        Observable
-            .interval(1000, TimeUnit.MILLISECONDS)
+        subscriptionClock?.dispose()
+        subscriptionClock = Observable
+            .interval(1, TimeUnit.SECONDS)
+            .subscribeOn(Schedulers.computation())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                clockText.text = DateFormat.getTimeInstance(DateFormat.MEDIUM).format(Calendar.getInstance().time)
+                clockText.text = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Calendar.getInstance().time).replace(" ", "\n")
             }
 
         countdownText = findViewById(R.id.countdownText)
         countdownSecondsEditText = findViewById(R.id.countdownEditText)
         countdownStartButton = findViewById(R.id.countdownStartButton)
 
+        countdownStartButton.setOnClickListener{
+            var seconds : Int? = countdownSecondsEditText.text.toString().toIntOrNull()
+            if (seconds != null && seconds > 0) {
+                countdownText.setTextColor(Color.BLACK)
+                countdownText.text = seconds.toString()
+                subscriptionCountdown?.dispose()
+                subscriptionCountdown = Observable
+                    .interval(1, TimeUnit.SECONDS)
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .takeWhile {
+                        seconds-- > 0
+                    }
+                    .subscribe {
+                        countdownText.text = seconds.toString()
+                        if (seconds == 0) countdownText.setTextColor(Color.RED)
+                    }
+
+            }
+        }
+
         stopwatchText = findViewById(R.id.stopwatchText)
         stopwatchMillisText = findViewById(R.id.stopwatchMillisText)
         stopwatchStartButton = findViewById(R.id.stopwatchStartButton)
         stopwatchEndButton = findViewById(R.id.stopwatchEndButton)
+        var ticks = 0
+        var ticksBeforePause = 0
+        var stopped = false
+
+        fun startStopwatch() {
+            subscriptionStopwatch?.dispose()
+            stopped = false
+            stopwatchEndButton.text = getString(R.string.button_Pause)
+            subscriptionStopwatch = Observable
+                .interval(1, TimeUnit.MILLISECONDS)
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .takeWhile {
+                    !stopped
+                }
+                .subscribe{
+                    ticks = ticksBeforePause + it.toInt()
+                    stopwatchText.text = (ticks / 1000).toString()
+                    stopwatchMillisText.text = (ticks % 1000).toString()
+                }
+        }
+
+        stopwatchStartButton.setOnClickListener {
+            if (!stopped) {
+                ticksBeforePause = 0
+                startStopwatch()
+            } else {
+                stopped = false
+                stopwatchEndButton.text = getString(R.string.button_Pause)
+                stopwatchStartButton.text = getString(R.string.button_Start)
+                startStopwatch()
+            }
+        }
+
+        stopwatchEndButton.setOnClickListener {
+            if (ticks == 0) return@setOnClickListener
+            if (!stopped) {
+                ticksBeforePause = ticks
+                stopped = true
+                stopwatchEndButton.text = getString(R.string.button_Reset)
+                stopwatchStartButton.text = getString(R.string.button_Resume)
+            } else {
+                ticksBeforePause = 0
+                stopped = false
+                stopwatchEndButton.text = getString(R.string.button_Pause)
+                stopwatchStartButton.text = getString(R.string.button_Start)
+                startStopwatch()
+            }
+        }
+
+    }
+
+    override fun onDestroy() {
+        subscriptionClock?.dispose()
+        subscriptionCountdown?.dispose()
+        subscriptionStopwatch?.dispose()
+        super.onDestroy()
     }
 }

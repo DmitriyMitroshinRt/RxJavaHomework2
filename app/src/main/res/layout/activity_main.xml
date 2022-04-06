@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MainActivity"
-    tools:ignore="HardcodedText,LabelFor">
+    tools:ignore="LabelFor">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -15,12 +15,13 @@
 
         <TextView
             style="@style/TitleText"
-            android:text="Часы:" />
+            android:text="@string/label_Time" />
 
         <TextView
             android:id="@+id/clockText"
             style="@style/MainText"
-            tools:text="[13:02:37]" />
+            android:textAlignment="center"
+            tools:text="[01.01.1970\n13:02:37]" />
 
     </FrameLayout>
 
@@ -36,14 +37,14 @@
 
         <TextView
             style="@style/TitleText"
-            android:text="Обратный отсчёт:" />
+            android:text="@string/label_Countdown" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="128dp"
             android:layout_height="wrap_content"
             android:layout_gravity="end|bottom"
             android:layout_margin="8dp"
-            android:hint="Секунды">
+            android:hint="@string/hint_Seconds">
 
             <EditText
                 android:id="@+id/countdownEditText"
@@ -65,7 +66,7 @@
             android:id="@+id/countdownStartButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Start" />
+            android:text="@string/button_Start" />
     </FrameLayout>
 
     <View
@@ -80,7 +81,7 @@
 
         <TextView
             style="@style/TitleText"
-            android:text="Секундомер:" />
+            android:text="@string/label_Stopwatch" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
@@ -123,7 +124,7 @@
                 android:id="@+id/stopwatchStartButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Start" />
+                android:text="@string/button_Start" />
 
             <View
                 android:layout_width="0dp"
@@ -134,7 +135,7 @@
                 android:id="@+id/stopwatchEndButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pause" />
+                android:text="@string/button_Pause" />
         </LinearLayout>
     </FrameLayout>
 

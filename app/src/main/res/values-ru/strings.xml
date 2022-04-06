@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Таймер</string>
+    <string name="button_Start">Старт</string>
+    <string name="button_Reset">Сброс</string>
+    <string name="button_Pause">Пауза</string>
+    <string name="button_Resume">Продолжить</string>
+    <string name="hint_Seconds">Секунды</string>
+    <string name="label_Time">Часы:</string>
+    <string name="label_Countdown">Обратный отсчёт:</string>
+    <string name="label_Stopwatch">Секундомер:</string>
 </resources>
