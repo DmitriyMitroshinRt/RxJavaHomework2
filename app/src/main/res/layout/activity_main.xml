@@ -21,7 +21,8 @@
             android:id="@+id/clockText"
             style="@style/MainText"
             android:textAlignment="center"
-            tools:text="[01.01.1970\n13:02:37]" />
+            tools:text="[01.01.1970\n13:02:37]"
+            android:textColor="?attr/colorOnSecondary"/>
 
     </FrameLayout>
 
@@ -57,6 +58,7 @@
         <TextView
             android:id="@+id/countdownText"
             style="@style/MainText"
+            android:textColor="?attr/colorOnSecondary"
             tools:text="[02:37]" />
 
         <Button
@@ -91,6 +93,7 @@
             <TextView
                 android:id="@+id/stopwatchText"
                 style="@style/MainText"
+                android:textColor="?attr/colorOnSecondary"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/stopwatchText"
                 app:layout_constraintStart_toStartOf="parent"
@@ -103,7 +106,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
                 android:fontFamily="sans-serif-medium"
-                android:textColor="#2b2b2b"
+                android:textColor="?attr/colorOnSecondary"
                 android:textSize="20sp"
                 app:layout_constraintBaseline_toBaselineOf="@id/stopwatchText"
                 app:layout_constraintEnd_toEndOf="parent"

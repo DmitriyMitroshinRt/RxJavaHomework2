@@ -1,10 +1,15 @@
 package iam.thevoid.epic.timeapp
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Vibrator
+import android.util.TypedValue
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.annotation.AttrRes
+import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
@@ -62,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         clockText = findViewById(R.id.clockText)
 
         subscriptionClock?.dispose()
+        @Suppress("DEPRECATION")
         subscriptionClock = Observable
             .interval(1, TimeUnit.SECONDS)
             .subscribeOn(Schedulers.computation())
@@ -77,7 +83,7 @@ class MainActivity : AppCompatActivity() {
         countdownStartButton.setOnClickListener{
             var seconds : Int? = countdownSecondsEditText.text.toString().toIntOrNull()
             if (seconds != null && seconds > 0) {
-                countdownText.setTextColor(Color.BLACK)
+                countdownText.setTextColor(getColorFromAttr(R.attr.colorOnSecondary))
                 countdownText.text = seconds.toString()
                 subscriptionCountdown?.dispose()
                 subscriptionCountdown = Observable
@@ -89,7 +95,11 @@ class MainActivity : AppCompatActivity() {
                     }
                     .subscribe {
                         countdownText.text = seconds.toString()
-                        if (seconds == 0) countdownText.setTextColor(Color.RED)
+                        if (seconds == 0) {
+                            @Suppress("DEPRECATION") val vibratorService = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                            @Suppress("DEPRECATION") vibratorService.vibrate(500)
+                            countdownText.setTextColor(Color.RED)
+                        }
                     }
 
             }
@@ -157,4 +167,15 @@ class MainActivity : AppCompatActivity() {
         subscriptionStopwatch?.dispose()
         super.onDestroy()
     }
+
+    @ColorInt
+    fun Context.getColorFromAttr(
+        @AttrRes attrColor: Int,
+        typedValue: TypedValue = TypedValue(),
+        resolveRefs: Boolean = true
+    ): Int {
+        theme.resolveAttribute(attrColor, typedValue, resolveRefs)
+        return typedValue.data
+    }
+
 }

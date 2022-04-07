@@ -5,7 +5,7 @@
     <string name="button_Pause">Pause</string>
     <string name="button_Resume">Resume</string>
     <string name="hint_Seconds">Seconds</string>
-    <string name="label_Time">Часы:</string>
-    <string name="label_Countdown">Обратный отсчёт:</string>
-    <string name="label_Stopwatch">Секундомер:</string>
+    <string name="label_Time">Clock:</string>
+    <string name="label_Countdown">Countdown:</string>
+    <string name="label_Stopwatch">Timer:</string>
 </resources>
