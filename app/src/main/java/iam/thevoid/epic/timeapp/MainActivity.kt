@@ -1,10 +1,23 @@
 package iam.thevoid.epic.timeapp
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
+import android.os.Vibrator
+import android.util.TypedValue
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.annotation.AttrRes
+import androidx.annotation.ColorInt
+import androidx.appcompat.app.AppCompatActivity
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.schedulers.Schedulers
+import java.text.DateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 // Дан экран с готовой разметкой
 // Реализовать при помощи RxJava
@@ -39,8 +52,13 @@ class MainActivity : AppCompatActivity() {
     // Секундомер
     private lateinit var stopwatchText: TextView
     private lateinit var stopwatchMillisText: TextView
-    private lateinit var stopwatchStartButton: EditText
-    private lateinit var stopwatchEndButton: EditText
+    private lateinit var stopwatchStartButton: Button
+    private lateinit var stopwatchEndButton: Button
+
+    // Счётчики
+    private var subscriptionClock : Disposable? = null
+    private var subscriptionCountdown : Disposable? = null
+    private var subscriptionStopwatch : Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,13 +66,116 @@ class MainActivity : AppCompatActivity() {
 
         clockText = findViewById(R.id.clockText)
 
+        subscriptionClock?.dispose()
+        @Suppress("DEPRECATION")
+        subscriptionClock = Observable
+            .interval(1, TimeUnit.SECONDS)
+            .subscribeOn(Schedulers.computation())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                clockText.text = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Calendar.getInstance().time).replace(" ", "\n")
+            }
+
         countdownText = findViewById(R.id.countdownText)
         countdownSecondsEditText = findViewById(R.id.countdownEditText)
         countdownStartButton = findViewById(R.id.countdownStartButton)
+
+        countdownStartButton.setOnClickListener{
+            var seconds : Int? = countdownSecondsEditText.text.toString().toIntOrNull()
+            if (seconds != null && seconds > 0) {
+                countdownText.setTextColor(getColorFromAttr(R.attr.colorOnSecondary))
+                countdownText.text = seconds.toString()
+                subscriptionCountdown?.dispose()
+                subscriptionCountdown = Observable
+                    .interval(1, TimeUnit.SECONDS)
+                    .subscribeOn(Schedulers.computation())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .takeWhile {
+                        seconds-- > 0
+                    }
+                    .subscribe {
+                        countdownText.text = seconds.toString()
+                        if (seconds == 0) {
+                            @Suppress("DEPRECATION") val vibratorService = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                            @Suppress("DEPRECATION") vibratorService.vibrate(500)
+                            countdownText.setTextColor(Color.RED)
+                        }
+                    }
+
+            }
+        }
 
         stopwatchText = findViewById(R.id.stopwatchText)
         stopwatchMillisText = findViewById(R.id.stopwatchMillisText)
         stopwatchStartButton = findViewById(R.id.stopwatchStartButton)
         stopwatchEndButton = findViewById(R.id.stopwatchEndButton)
+        var ticks = 0
+        var ticksBeforePause = 0
+        var stopped = false
+
+        fun startStopwatch() {
+            subscriptionStopwatch?.dispose()
+            stopped = false
+            stopwatchEndButton.text = getString(R.string.button_Pause)
+            subscriptionStopwatch = Observable
+                .interval(1, TimeUnit.MILLISECONDS)
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .takeWhile {
+                    !stopped
+                }
+                .subscribe{
+                    ticks = ticksBeforePause + it.toInt()
+                    stopwatchText.text = (ticks / 1000).toString()
+                    stopwatchMillisText.text = (ticks % 1000).toString()
+                }
+        }
+
+        stopwatchStartButton.setOnClickListener {
+            if (!stopped) {
+                ticksBeforePause = 0
+                startStopwatch()
+            } else {
+                stopped = false
+                stopwatchEndButton.text = getString(R.string.button_Pause)
+                stopwatchStartButton.text = getString(R.string.button_Start)
+                startStopwatch()
+            }
+        }
+
+        stopwatchEndButton.setOnClickListener {
+            if (ticks == 0) return@setOnClickListener
+            if (!stopped) {
+                ticksBeforePause = ticks
+                stopped = true
+                stopwatchEndButton.text = getString(R.string.button_Reset)
+                stopwatchStartButton.text = getString(R.string.button_Resume)
+            } else {
+                ticksBeforePause = 0
+                stopped = false
+                stopwatchEndButton.text = getString(R.string.button_Pause)
+                stopwatchStartButton.text = getString(R.string.button_Start)
+                startStopwatch()
+            }
+        }
+
     }
+
+    override fun onDestroy() {
+        subscriptionClock?.dispose()
+        subscriptionCountdown?.dispose()
+        subscriptionStopwatch?.dispose()
+        super.onDestroy()
+    }
+
+    @ColorInt
+    fun Context.getColorFromAttr(
+        @AttrRes attrColor: Int,
+        typedValue: TypedValue = TypedValue(),
+        resolveRefs: Boolean = true
+    ): Int {
+        theme.resolveAttribute(attrColor, typedValue, resolveRefs)
+        return typedValue.data
+    }
+
 }
