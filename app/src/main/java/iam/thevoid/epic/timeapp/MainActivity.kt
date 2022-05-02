@@ -12,11 +12,15 @@ import androidx.appcompat.app.AppCompatActivity
 import com.jakewharton.rxbinding3.view.clicks
 import io.reactivex.Observable
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxkotlin.merge
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Flow
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 //import kotlinx.android.synthetic.main.activity_main.*
 //import java.util.concurrent.TimeUnit
@@ -36,7 +40,7 @@ import java.util.concurrent.Flow
 //    б) По нажатию на "Старт" начинается обратный отсчёт
 //    в) (не обязательно) По окончании таймер каким либо образом сигнализирует об окончании,
 //       например область таймера вспыхивает ярким цветом
-// 3) Секундомер ^? - Не до конца доделал
+// 3) Секундомер ^? - Не до конца доделал - не детализированно как время считать ?
 //    а) Пользователь нажимает на "Старт", начинается отсчёт времени. В соответствующие текстовые
 //       поля выводится количество прошедшего времени (отдельно время с точностью до секунд,
 //       отдельно миллисекунды)
@@ -48,6 +52,13 @@ import java.util.concurrent.Flow
 //       состояния паузы
 private const val MAXIMUM_STOP_WATCH_LIMIT = 36000000L
 private const val NUMBER_OF_SECONDS_IN_ONE_MINUTE = 60
+private const val NUMBER_OF_MINUTES_IN_ONE_HOUR = 60
+private const val NUMBER_OF_MILLSECONDS_IN_ONE_SECOND = 1000
+
+
+var elapsedTime = AtomicLong();
+var resumed =  AtomicBoolean();
+var stopped = AtomicBoolean();
 
 class MainActivity : AppCompatActivity() {
 
@@ -62,7 +73,7 @@ class MainActivity : AppCompatActivity() {
     // Секундомер
     private lateinit var stopwatchText: TextView
     private lateinit var stopwatchMillisText: TextView
-    private lateinit var  SecName: TextView
+    private lateinit var SecName: TextView
     private lateinit var stopwatchStartButton: Button /*EditText*/
     private lateinit var stopwatchEndButton:   Button /*EditText*/
 
@@ -70,9 +81,14 @@ class MainActivity : AppCompatActivity() {
     private val disposable =
         io.reactivex.disposables.CompositeDisposable()
     private val disposableMS = io.reactivex.disposables.CompositeDisposable()
+
+    var flowable: Disposable? = null
+
     //var disposable: Disposable? = null;
     private val displayInitialState by lazy { resources.getString(R.string._0_0) }
     private val displayInitialStateMS by lazy { resources.getString(R.string._0_0_0) }
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,9 +102,9 @@ class MainActivity : AppCompatActivity() {
         countdownStartButton = findViewById(R.id.countdownStartButton)
 
         countdownStartButton.setOnClickListener {
-          // countdownText.text = "Hello Kitty!"
-            //backCount(countdownSecondsEditText.toString().toLong())
-            timer(countdownSecondsEditText.text.toString().toLong())
+            if (!(countdownSecondsEditText.text.isNullOrBlank())) {
+                timer(countdownSecondsEditText.text.toString().toLong())
+            }
         }
 
 
@@ -103,15 +119,59 @@ class MainActivity : AppCompatActivity() {
         stopwatchEndButton   =   findViewById(R.id.stopwatchEndButton)
 
 
+        stopwatchStartButton.setOnClickListener {
+            resumed.set(true)
+            stopped.set(false)
+            if  ( stopwatchEndButton.text == "Reset" ) {
+                stopwatchEndButton.text = "Pause"
+            }
 
+            stopwatchStartButton.isEnabled = false
+            stopwatchEndButton.isEnabled = true
+            this.flowable = startTimer()
+        }
 
+        stopwatchEndButton.setOnClickListener {
+            //pauseTimer()
+            //stopTimer()
+            //1st one
+            var secondPress  = if (stopwatchEndButton.text.equals("Pause")) { 1 } else {2}
+            stopwatchStartButton.isEnabled = true
+            stopwatchEndButton.isEnabled = true
 
+            if (stopwatchEndButton.text.equals("Reset")) {
+                // so that we to define that pressed button second one
+                stopwatchStartButton.text = "Start"
+                stopwatchEndButton.text   = "Pause"
+                stopwatchEndButton.isEnabled = false // that .. get confused
+                secondPress = 2
+                elapsedTime.set(0L);
+                // probably don't do it.
+                //this.flowable?.dispose()
+                //this.flowable = null
+            }
 
-        mergeClicks().switchMap {
+            if (stopwatchEndButton.text.equals("Pause") && secondPress == 1 )
+            {
+                stopwatchEndButton.text   = "Reset"
+                //stopwatchStartButton.text = "Start"
+                stopwatchStartButton.text = "Continue"
+            }
+            //stopped.set(true)
+            stopTimer()
+        }
+
+        stopwatchEndButton.isEnabled = false
+
+     /*   mergeClicks().switchMap {
             if (it) timerObservable()
             else Observable.just(displayInitialState)
-        }.subscribe(stopwatchText::setText)
+        }.subscribe(
+            { s -> /*println(s)*/ stopwatchText.setText(s.substring(1,7))
+                stopwatchMillisText.setText(s)}
+           )
         .let(disposable::add)
+      */
 
       /*     mergeClicks().switchMap {
                 if (it) timerObservableMS()
@@ -120,14 +180,53 @@ class MainActivity : AppCompatActivity() {
                 .let(disposableMS::add)
        */
 
-
-
-
     }
+
+    fun startTimer(): /*@NonNull*/ Disposable { //Create and starts ticker :)
+        return Flowable.interval(1, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .onBackpressureBuffer ()
+            .takeWhile { !stopped.get() }
+            .filter { resumed.get() }
+            .map {
+                elapsedTime.addAndGet(
+                    1 //1000
+                )
+            }
+            .observeOn (AndroidSchedulers.mainThread ())
+            .subscribe({ s: Long ->
+                val txtSec =
+                    "${(((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE) / NUMBER_OF_MINUTES_IN_ONE_HOUR ).toString().padStart(2,'0')} : ${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')} : ${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) % NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')}"
+                    //"${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')} : ${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) % NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')}"
+                stopwatchText.setText(txtSec)
+                val txtMil ="${(s % NUMBER_OF_MILLSECONDS_IN_ONE_SECOND).toString().padStart(3,'0')}"
+                    //"${(s % NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) - (s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) }"
+                stopwatchMillisText.setText(txtMil)
+                    })
+    }
+
+
+    fun  pauseTimer() {
+        resumed.set(false);
+    }
+    fun resumeTimer() {
+        resumed.set(true)
+    }
+
+    fun stopTimer() {
+        stopped.set(true)
+    }
+
+    fun addToTimer(seconds: Int) {
+        elapsedTime.addAndGet((seconds * 1000).toLong())
+    }
+
+
 
     override fun onDestroy() {
         disposable.clear()
         disposableMS.clear()
+        flowable?.dispose()
+        flowable = null
         super.onDestroy()
     }
 
@@ -139,9 +238,10 @@ class MainActivity : AppCompatActivity() {
     private fun buttonStateManager(boolean: Boolean) {
         stopwatchStartButton.isEnabled = !boolean
         stopwatchEndButton.isEnabled = boolean
+
     }
     private fun timerObservable(): Observable<String> =
-        Observable.interval(0, 1, java.util.concurrent.TimeUnit.SECONDS)
+        Observable.interval(0, 1, /*java.util.concurrent.TimeUnit.SECONDS*/java.util.concurrent.TimeUnit.MILLISECONDS)
             .takeWhile { it <= MAXIMUM_STOP_WATCH_LIMIT }
             .map(timeFormatter)
             .observeOn(io.reactivex.android.schedulers.AndroidSchedulers.mainThread())
@@ -157,7 +257,9 @@ class MainActivity : AppCompatActivity() {
     private val timeFormatter: (Long) -> String =
         { secs ->
             if (secs == MAXIMUM_STOP_WATCH_LIMIT) displayInitialState
-            else "${secs / NUMBER_OF_SECONDS_IN_ONE_MINUTE} : ${secs % NUMBER_OF_SECONDS_IN_ONE_MINUTE}"
+           /// else "${secs / NUMBER_OF_SECONDS_IN_ONE_MINUTE} : ${secs % NUMBER_OF_SECONDS_IN_ONE_MINUTE}"
+            else "${(secs / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE} : ${(secs / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) % NUMBER_OF_SECONDS_IN_ONE_MINUTE}  :  ${(secs / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) - (secs % NUMBER_OF_MILLSECONDS_IN_ONE_SECOND)}"
+
         }
 
 
@@ -181,9 +283,8 @@ class MainActivity : AppCompatActivity() {
 
     val mSubscription: Flow.Subscription? = null
     private fun timer(count: Long) {
-        if (count.toString().isEmpty())
+        if (count.toString().isNullOrEmpty())
         {  countdownText.text = "err:" //+ count.toString()
-
             return}
         Flowable.interval (0, 1,  java.util.concurrent.TimeUnit.SECONDS)
             .onBackpressureBuffer ()
