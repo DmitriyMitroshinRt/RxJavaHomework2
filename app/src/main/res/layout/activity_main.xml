@@ -35,6 +35,7 @@
         android:layout_weight="1">
 
         <TextView
+            android:id="@+id/countDownName"
             style="@style/TitleText"
             android:text="Обратный отсчёт:" />
 

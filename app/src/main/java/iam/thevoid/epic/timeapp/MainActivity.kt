@@ -16,20 +16,14 @@ import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxkotlin.merge
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Flow
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
-//import kotlinx.android.synthetic.main.activity_main.*
-//import java.util.concurrent.TimeUnit
-//
 
-
-//import io.reactivex.android.schedulers.AndroidSchedulers
-//import kotlinx.android.synthetic.main.activity_main.*
-//import java.util.concurrent.TimeUnit
 
 // Дан экран с готовой разметкой
 // Реализовать при помощи RxJava
@@ -69,6 +63,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var countdownText: TextView
     private lateinit var countdownSecondsEditText: EditText
     private lateinit var countdownStartButton: Button
+    private lateinit var countDownName: TextView
 
     // Секундомер
     private lateinit var stopwatchText: TextView
@@ -104,6 +99,11 @@ class MainActivity : AppCompatActivity() {
         countdownStartButton.setOnClickListener {
             if (!(countdownSecondsEditText.text.isNullOrBlank())) {
                 timer(countdownSecondsEditText.text.toString().toLong())
+                countDownName.setText("Обратный отсчет:")
+            }
+            else
+            {
+                countDownName.text =  "Обратный отсчет: Задайте адекватное количество секунд."
             }
         }
 
@@ -113,6 +113,7 @@ class MainActivity : AppCompatActivity() {
         stopwatchMillisText = findViewById(R.id.stopwatchMillisText)
         //
         SecName =  findViewById(R.id.SecName)
+        countDownName =  findViewById(R.id.countDownName)
         //
 
         stopwatchStartButton =  findViewById(R.id.stopwatchStartButton)
@@ -132,8 +133,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         stopwatchEndButton.setOnClickListener {
-            //pauseTimer()
-            //stopTimer()
             //1st one
             var secondPress  = if (stopwatchEndButton.text.equals("Pause")) { 1 } else {2}
             stopwatchStartButton.isEnabled = true
@@ -146,7 +145,7 @@ class MainActivity : AppCompatActivity() {
                 stopwatchEndButton.isEnabled = false // that .. get confused
                 secondPress = 2
                 elapsedTime.set(0L);
-                // probably don't do it.
+                // probably don't do it. leak?
                 //this.flowable?.dispose()
                 //this.flowable = null
             }
@@ -189,7 +188,7 @@ class MainActivity : AppCompatActivity() {
             .filter { resumed.get() }
             .map {
                 elapsedTime.addAndGet(
-                    1 //1000
+                    1
                 )
             }
             .observeOn (AndroidSchedulers.mainThread ())
@@ -283,9 +282,6 @@ class MainActivity : AppCompatActivity() {
 
     val mSubscription: Flow.Subscription? = null
     private fun timer(count: Long) {
-        if (count.toString().isNullOrEmpty())
-        {  countdownText.text = "err:" //+ count.toString()
-            return}
         Flowable.interval (0, 1,  java.util.concurrent.TimeUnit.SECONDS)
             .onBackpressureBuffer ()
             .take (count + 1)
@@ -300,8 +296,6 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
-
-
     }
 
 
@@ -315,13 +309,7 @@ class MainActivity : AppCompatActivity() {
             }
             .observeOn (AndroidSchedulers.mainThread ())
             .subscribe({
-                //val curTime: Long = Date().getTime()
-                val currentTime = System.currentTimeMillis()
-                val simpleDateFormat = SimpleDateFormat(/*"hh:mm:ss.S"*/"HH:mm:ss.SSS")
-                val date = Date(currentTime)
-                val time: String = simpleDateFormat.format(date)
-                clockText.text = time
-
+                clockText.text = SimpleDateFormat(/*"hh:mm:ss.S"*//*"HH:mm:ss.SSS"*/"HH:mm:ss").format(Date(System.currentTimeMillis())) //time
             })
 
 
