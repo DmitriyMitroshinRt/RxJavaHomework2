@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">My Application</string>
+    <string name="_0_0">0:0</string>
+    <string name="_0_0_0">000000</string>
+    <string name="count_down_name">Обратный отсчет</string>
+    <string name="count_down_error">Обратный отсчет:Задайте адекватное количество секунд.</string>
 </resources>
