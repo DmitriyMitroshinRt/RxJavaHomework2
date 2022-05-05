@@ -3,6 +3,7 @@ package iam.thevoid.epic.timeapp
 //import io.reactivex.rxjava3.core.Observable
 //
 //
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
@@ -99,11 +100,11 @@ class MainActivity : AppCompatActivity() {
         countdownStartButton.setOnClickListener {
             if (!(countdownSecondsEditText.text.isNullOrBlank())) {
                 timer(countdownSecondsEditText.text.toString().toLong())
-                countDownName.setText("Обратный отсчет:")
+                countDownName.setText(R.string.count_down_name)
             }
             else
             {
-                countDownName.text =  "Обратный отсчет: Задайте адекватное количество секунд."
+                countDownName.text =  getResources().getString(R.string.count_down_error)
             }
         }
 
@@ -162,22 +163,22 @@ class MainActivity : AppCompatActivity() {
 
         stopwatchEndButton.isEnabled = false
 
-     /*   mergeClicks().switchMap {
-            if (it) timerObservable()
-            else Observable.just(displayInitialState)
-        }.subscribe(
-            { s -> /*println(s)*/ stopwatchText.setText(s.substring(1,7))
-                stopwatchMillisText.setText(s)}
-           )
-        .let(disposable::add)
-      */
+        /*   mergeClicks().switchMap {
+               if (it) timerObservable()
+               else Observable.just(displayInitialState)
+           }.subscribe(
+               { s -> /*println(s)*/ stopwatchText.setText(s.substring(1,7))
+                   stopwatchMillisText.setText(s)}
+              )
+           .let(disposable::add)
+         */
 
-      /*     mergeClicks().switchMap {
-                if (it) timerObservableMS()
-                else Observable.just(displayInitialStateMS)
-            }.subscribe(/*stopwatchMillisText*/SecName::setText)
-                .let(disposableMS::add)
-       */
+        /*     mergeClicks().switchMap {
+                  if (it) timerObservableMS()
+                  else Observable.just(displayInitialStateMS)
+              }.subscribe(/*stopwatchMillisText*/SecName::setText)
+                  .let(disposableMS::add)
+         */
 
     }
 
@@ -195,12 +196,12 @@ class MainActivity : AppCompatActivity() {
             .subscribe({ s: Long ->
                 val txtSec =
                     "${(((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE) / NUMBER_OF_MINUTES_IN_ONE_HOUR ).toString().padStart(2,'0')} : ${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')} : ${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) % NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')}"
-                    //"${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')} : ${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) % NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')}"
+                //"${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')} : ${((s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) % NUMBER_OF_SECONDS_IN_ONE_MINUTE).toString().padStart(2,'0')}"
                 stopwatchText.setText(txtSec)
                 val txtMil ="${(s % NUMBER_OF_MILLSECONDS_IN_ONE_SECOND).toString().padStart(3,'0')}"
-                    //"${(s % NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) - (s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) }"
+                //"${(s % NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) - (s / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) }"
                 stopwatchMillisText.setText(txtMil)
-                    })
+            })
     }
 
 
@@ -256,7 +257,7 @@ class MainActivity : AppCompatActivity() {
     private val timeFormatter: (Long) -> String =
         { secs ->
             if (secs == MAXIMUM_STOP_WATCH_LIMIT) displayInitialState
-           /// else "${secs / NUMBER_OF_SECONDS_IN_ONE_MINUTE} : ${secs % NUMBER_OF_SECONDS_IN_ONE_MINUTE}"
+            /// else "${secs / NUMBER_OF_SECONDS_IN_ONE_MINUTE} : ${secs % NUMBER_OF_SECONDS_IN_ONE_MINUTE}"
             else "${(secs / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND ) / NUMBER_OF_SECONDS_IN_ONE_MINUTE} : ${(secs / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) % NUMBER_OF_SECONDS_IN_ONE_MINUTE}  :  ${(secs / NUMBER_OF_MILLSECONDS_IN_ONE_SECOND) - (secs % NUMBER_OF_MILLSECONDS_IN_ONE_SECOND)}"
 
         }
@@ -264,7 +265,6 @@ class MainActivity : AppCompatActivity() {
 
     private val timeFormatterMS: (Long) -> String =
         { secs ->
-
             if (secs == MAXIMUM_STOP_WATCH_LIMIT) displayInitialStateMS
             else "${secs} "
         }
@@ -272,27 +272,31 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         disposable?.dispose()
-       // disposable = null
+        // disposable = null
     }
 
     override fun onStart() {
         super.onStart()
-     //   disposable = null; // subscribeInput()
+        //   disposable = null; // subscribeInput()
     }
 
     val mSubscription: Flow.Subscription? = null
+    @SuppressLint("ResourceAsColor", "ResourceType")
     private fun timer(count: Long) {
+        countdownStartButton.isEnabled=false //how make kill emit and start again
         Flowable.interval (0, 1,  java.util.concurrent.TimeUnit.SECONDS)
             .onBackpressureBuffer ()
             .take (count + 1)
             .map{ aLong ->
-                count - aLong //
+                count - aLong
             }
             .observeOn (AndroidSchedulers.mainThread ())
             .subscribe({
                 countdownText.text = it.toString()
                 if (it == 0L) {
-                    countdownText.setTextColor(Color.RED)
+                    //val redClr = getResources().getString(R.color.red);
+                    countdownText.setTextColor(/*R.color.red*/ Color.RED)
+                    countdownStartButton.isEnabled=true
                 }
             })
 
@@ -316,5 +320,5 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-   }
+}
 
